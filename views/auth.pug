@@ -1,0 +1,66 @@
+extends layout
+
+block content
+
+  p Say hello using the People API.
+
+  button#authorize-button(style='display: none;') Authorize
+  button#signout-button(style='display: none;') Sign Out
+  
+  #content
+
+  script(type='text/javascript').
+    var apiKey = 'AIzaSyAJi7IU4RZK-qac3kS7ukpjjxaylQgXw2A';
+    var discoveryDocs = ['https://www.googleapis.com/discovery/v1/apis/translate/v2/rest'];
+    var clientId = '380737989237-9si62gq1t6msfdu10ds4d4ueg9nuc94j.apps.googleusercontent.com';
+    var scopes = 'https://www.googleapis.com/auth/spreadsheets';
+    var authorizeButton = document.getElementById('authorize-button');
+    var signoutButton = document.getElementById('signout-button');
+    function handleClientLoad() {
+    gapi.load('client:auth2', initClient);
+    }
+    function initClient() {
+    gapi.client.init({
+    apiKey: apiKey,
+    discoveryDocs: discoveryDocs,
+    clientId: clientId,
+    scope: scopes
+    }).then(function () {
+    // Listen for sign-in state changes.
+    gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+    // Handle the initial sign-in state.
+    updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+    authorizeButton.onclick = handleAuthClick;
+    signoutButton.onclick = handleSignoutClick;
+    });
+    }
+    function updateSigninStatus(isSignedIn) {
+    if (isSignedIn) {
+    authorizeButton.style.display = 'none';
+    signoutButton.style.display = 'block';
+    makeApiCall();
+    } else {
+    authorizeButton.style.display = 'block';
+    signoutButton.style.display = 'none';
+    }
+    }
+    function handleAuthClick(event) {
+    gapi.auth2.getAuthInstance().signIn();
+    }
+    function handleSignoutClick(event) {
+    gapi.auth2.getAuthInstance().signOut();
+    }
+    // Load the API and make an API call.  Display the results on the screen.
+    function makeApiCall() {
+    gapi.client.people.people.get({
+    'resourceName': 'people/me',
+    'requestMask.includeField': 'person.names'
+    }).then(function (resp) {
+    var p = document.createElement('p');
+    var name = resp.result.names[0].givenName;
+    p.appendChild(document.createTextNode('Hello, ' + name + '!'));
+    document.getElementById('content').appendChild(p);
+    });
+    }
+    
+  script(async='', defer='', src='https://apis.google.com/js/api.js', onload='this.onload=function(){};handleClientLoad()', onreadystatechange="if (this.readyState === 'complete') this.onload()")
